@@ -7,6 +7,7 @@ from discord.ext import commands, tasks
 from discord import app_commands
 from utils import get_random_user, generate_cards_from_bin, COUNTRY_MAP, COUNTRY_EMOJI
 from spammer import SMSSpammer
+from web_server import start_server
 
 # Cấu hình logging
 logging.basicConfig(
@@ -188,6 +189,9 @@ async def help_command(interaction: discord.Interaction):
 
 # Khởi động bot
 def main():
+    # Khởi động web server
+    start_server()
+    # Chạy bot
     bot.run(TOKEN)
 
 

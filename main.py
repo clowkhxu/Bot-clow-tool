@@ -1,7 +1,9 @@
 import os
 import logging
 import discord
-from discord.ext import commands
+import asyncio
+import aiohttp
+from discord.ext import commands, tasks
 from discord import app_commands
 from utils import get_random_user, generate_cards_from_bin, COUNTRY_MAP, COUNTRY_EMOJI
 from spammer import SMSSpammer
@@ -14,6 +16,9 @@ logger = logging.getLogger(__name__)
 
 # Lấy token bot từ biến môi trường
 TOKEN = os.environ.get("DISCORD_BOT_TOKEN")
+
+# Lấy URL của ứng dụng Render
+RENDER_URL = os.environ.get("RENDER_URL")
 
 # Khởi tạo bot với intents
 intents = discord.Intents.default()
@@ -29,6 +34,26 @@ async def on_ready():
         logger.info(f"Đã đồng bộ {len(synced)} lệnh slash")
     except Exception as e:
         logger.error(f"Lỗi khi đồng bộ lệnh: {e}")
+    
+    # Bắt đầu task ping server
+    if RENDER_URL:
+        keep_alive.start()
+    else:
+        logger.warning("RENDER_URL không được cấu hình. Không thể bắt đầu task ping server.")
+
+
+# Task tự động ping server mỗi 14 phút để giữ cho Render không tắt
+@tasks.loop(minutes=14)
+async def keep_alive():
+    if not RENDER_URL:
+        return
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(RENDER_URL) as response:
+                logger.info(f"Ping server tại {RENDER_URL}: {response.status}")
+    except Exception as e:
+        logger.error(f"Lỗi khi ping server: {e}")
 
 
 # Các lệnh slash
